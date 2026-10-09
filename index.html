@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منيو وروابط المحل</title>
+    <!-- مكتبة Supabase للاتصال بقاعدة البيانات -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 40px auto;
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 25px;
+            color: #4CAF50;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            background-color: #2e2e2e;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+            box-sizing: border-box;
+            border: 1px solid #444;
+        }
+        .btn:hover {
+            background-color: #4CAF50;
+            border-color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 id="store-title">جاري تحميل البيانات...</h1>
+        
+        <div id="links-section">
+            <a id="menu-btn" href="#" class="btn" style="display:none;" target="_blank">📋 تصفح المنيو</a>
+            <a id="map-btn" href="#" class="btn" style="display:none;" target="_blank">📍 تقييم جوجل ماب</a>
+            <a id="insta-btn" href="#" class="btn" style="display:none;" target="_blank">📸 حساب الانستقرام</a>
+            <a id="phone-btn" href="#" class="btn" style="display:none;">📞 اتصال مباشر</a>
+        </div>
+    </div>
+
+    <script>
+        // إعدادات الاتصال بـ Supabase (حط معلومات مشروعك هنا)
+        const SUPABASE_URL = 'https://mwpeycqflokjlwwhtlte.supabase.co/rest/v1/';
+        const SUPABASE_ANON_KEY = 'sb_publishable_CRRpmEutt5d86meO07bMPw_N4WE6GVr';
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadStoreData() {
+            // نقرأ رقم المحل من الرابط، مثلاً: index.html?id=1
+            const urlParams = new URLSearchParams(window.location.search);
+            const storeId = urlParams.get('id');
+
+            if (!storeId) {
+                document.getElementById('store-title').innerText = 'المحل غير موجود';
+                return;
+            }
+
+            // جلب بيانات المحل من جدول clients
+            const { data, error } = await supabase
+                .from('clients')
+                .select('*')
+                .eq('id', storeId)
+                .single();
+
+            if (error || !data) {
+                document.getElementById('store-title').innerText = 'عفواً، بيانات المحل غير متوفرة';
+                return;
+            }
+
+            // تعبئة البيانات في الصفحة
+            document.getElementById('store-title').innerText = data.store_name || 'مرحباً بك';
+
+            if (data.menu_url) {
+                let mBtn = document.getElementById('menu-btn');
+                mBtn.href = data.menu_url;
+                mBtn.style.display = 'block';
+            }
+            if (data.map_url) {
+                let mapBtn = document.getElementById('map-btn');
+                mapBtn.href = data.map_url;
+                mapBtn.style.display = 'block';
+            }
+            if (data.instagram_url) {
+                let instaBtn = document.getElementById('insta-btn');
+                instaBtn.href = data.instagram_url;
+                instaBtn.style.display = 'block';
+            }
+            if (data.phone) {
+                let phoneBtn = document.getElementById('phone-btn');
+                phoneBtn.href = 'tel:' + data.phone;
+                phoneBtn.style.display = 'block';
+            }
+        }
+
+        loadStoreData();
+    </script>
+</body>
+</html>
