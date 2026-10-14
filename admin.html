@@ -1,50 +1,791 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة تحكم NFC</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;color:#18212f;background:#f4f6fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1050px;margin:30px auto;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}.card{background:#fff;border:1px solid #e5e9f0;border-radius:16px;padding:20px;box-shadow:0 6px 24px #14213d0b;margin-bottom:16px}h1{font-size:25px;margin:0}h2{font-size:19px;margin:0 0 14px}.muted{color:#687386;font-size:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{display:block;font-size:14px;font-weight:650;margin-bottom:5px}input,textarea,select{width:100%;padding:11px;border:1px solid #ccd4df;border-radius:10px;font:inherit;background:#fff}textarea{min-height:76px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:700;cursor:pointer;background:#18212f;color:#fff}button.secondary{background:#e9edf3;color:#18212f}button.danger{background:#b42318}button:disabled{opacity:.5;cursor:wait}.hidden{display:none!important}.msg{padding:10px 12px;border-radius:10px;margin:12px 0;background:#eef4ff;color:#214d91;white-space:pre-wrap}.msg.error{background:#fff0ef;color:#a12820}.list{display:grid;gap:10px}.shop{border:1px solid #e2e7ef;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.shop strong{font-size:16px}.shop small{display:block;color:#687386;margin-top:4px}.shop-actions{display:flex;gap:7px}.pill{display:inline-block;font-size:12px;border-radius:30px;padding:4px 8px;background:#e9f7ef;color:#17663a}.pill.off{background:#f2f3f5;color:#5b6472}@media(max-width:650px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.wrap{margin:12px auto}.card{padding:15px}}
-</style></head><body><main class="wrap">
-<header class="top"><div><h1>لوحة تحكم NFC</h1><div class="muted">لوحة خاصة لإدارة المحلات — منفصلة عن صفحة الزبائن</div></div><button id="logout" class="secondary hidden">تسجيل خروج</button></header>
-<section id="login-card" class="card"><h2>دخول المدير</h2><p class="muted">سجّل الدخول بحساب المدير الذي تنشئه في Supabase.</p><form id="login-form"><div class="grid"><div><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required></div><div><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required></div></div><div class="actions"><button type="submit">دخول</button></div></form><div id="login-msg" class="msg hidden"></div></section>
-<section id="app" class="hidden">
-<div class="card"><div class="top"><h2 id="form-title">إضافة محل جديد</h2><button id="new-btn" class="secondary" type="button">+ محل جديد</button></div>
-<form id="shop-form"><input id="shop-id" type="hidden"><div class="grid">
-<div><label for="name">اسم المحل *</label><input id="name" required maxlength="120" placeholder="مثال: ديوانية مخمل"></div>
-<div><label for="slug">الرابط المختصر (Slug) *</label><input id="slug" required maxlength="120" placeholder="diwaniya-makhmal"></div>
-<div><label for="emoji">رمز / إيموجي</label><input id="emoji" maxlength="20" placeholder="☕"></div>
-<div><label for="catagory">التصنيف</label><input id="catagory" maxlength="80" placeholder="كافيه / مطعم"></div>
-<div><label for="contact_name">اسم جهة التواصل</label><input id="contact_name" maxlength="120"></div>
-<div><label for="brand_color">لون الهوية</label><input id="brand_color" type="color" value="#243b53"></div>
-<div class="full"><label for="description">وصف المحل</label><textarea id="description" maxlength="1000"></textarea></div>
-<div class="full"><label for="notes">ملاحظات داخلية</label><textarea id="notes" maxlength="2000"></textarea></div>
-<div><label for="is_active">حالة المحل</label><select id="is_active"><option value="true">مفعّل</option><option value="false">غير مفعّل</option></select></div>
-</div><div class="actions"><button id="save-btn" type="submit">حفظ المحل</button><button id="cancel-btn" class="secondary" type="button">إلغاء</button></div><div id="form-msg" class="msg hidden"></div></form></div>
-<div class="card"><div class="top"><h2>المحلات المسجلة</h2><button id="refresh-btn" class="secondary" type="button">تحديث القائمة</button></div><div id="list-msg" class="msg hidden"></div><div id="shops-list" class="list"></div></div>
-</section></main>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NFC Hub | لوحة التحكم</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #f4f6fa;
+      color: #182230;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      background: #172033;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 7px;
+      border: 1px solid #dce2ec;
+      border-radius: 10px;
+      background: white;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-size: 13px;
+    }
+
+    h1, h2, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 25px;
+    }
+
+    h2 {
+      font-size: 19px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 22px;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      margin-bottom: 20px;
+      border: 1px solid #e6eaf1;
+      border-radius: 18px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .muted {
+      color: #778196;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: #172033;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .brand h1 {
+      margin: 0;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: white;
+      border: 1px solid #e6eaf1;
+      border-radius: 15px;
+      padding: 18px;
+    }
+
+    .stat span {
+      color: #778196;
+      font-size: 13px;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 28px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0 16px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .secondary {
+      background: #edf0f6;
+      color: #172033;
+    }
+
+    .danger {
+      background: #fff0f0;
+      color: #b42318;
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #eef8f0;
+      color: #18733a;
+      font-size: 13px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      background: #fff0f0;
+      color: #b42318;
+    }
+
+    .shop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid #edf0f5;
+    }
+
+    .shop:last-child {
+      border-bottom: 0;
+    }
+
+    .shop-name {
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+
+    .shop-info {
+      min-width: 0;
+    }
+
+    .shop-info small {
+      display: block;
+      margin-top: 7px;
+      color: #778196;
+      overflow-wrap: anywhere;
+    }
+
+    .shop-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .shop-actions button {
+      padding: 9px 12px;
+      font-size: 12px;
+    }
+
+    .empty {
+      padding: 25px 0;
+      color: #778196;
+      text-align: center;
+    }
+
+    a {
+      color: #3155a6;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 650px) {
+      .container {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shop {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <header class="brand">
+    <div class="logo">N</div>
+    <div>
+      <h1>NFC Hub</h1>
+      <p class="muted">لوحة الإدارة الخاصة</p>
+    </div>
+  </header>
+
+  <!-- تسجيل الدخول -->
+  <section id="loginCard" class="card">
+    <h2>تسجيل دخول الإدارة</h2>
+    <p class="muted">
+      سجّل الدخول باستخدام حساب الإدارة الذي أنشأته في Supabase.
+    </p>
+
+    <form id="loginForm">
+      <label for="email">البريد الإلكتروني</label>
+      <input id="email" type="email" autocomplete="username" required>
+
+      <label for="password">كلمة المرور</label>
+      <input id="password" type="password"
+             autocomplete="current-password" required>
+
+      <div class="actions">
+        <button id="loginBtn" type="submit">دخول</button>
+      </div>
+    </form>
+
+    <div id="loginStatus" class="status hidden"></div>
+  </section>
+
+  <!-- لوحة الإدارة -->
+  <main id="dashboard" class="hidden">
+
+    <div class="actions" style="margin-bottom:20px">
+      <button id="logoutBtn" class="secondary">تسجيل الخروج</button>
+    </div>
+
+    <section class="stats">
+      <div class="stat">
+        <span>إجمالي المحلات</span>
+        <strong id="totalCount">0</strong>
+      </div>
+
+      <div class="stat">
+        <span>محلات لديها رقم تواصل</span>
+        <strong id="phoneCount">0</strong>
+      </div>
+
+      <div class="stat">
+        <span>محلات لديها روابط</span>
+        <strong id="linksCount">0</strong>
+      </div>
+    </section>
+
+    <!-- إضافة وتعديل المحلات -->
+    <section class="card">
+      <h2 id="formTitle">إضافة محل جديد</h2>
+
+      <form id="shopForm">
+        <input id="shopId" type="hidden">
+
+        <div class="form-grid">
+          <div>
+            <label for="storeName">اسم المحل *</label>
+            <input id="storeName" required
+                   placeholder="مثال: ديوانية مخمل">
+          </div>
+
+          <div>
+            <label for="phone">رقم التواصل</label>
+            <input id="phone" type="tel"
+                   placeholder="05xxxxxxxx">
+          </div>
+
+          <div>
+            <label for="menuUrl">رابط المنيو</label>
+            <input id="menuUrl" type="url"
+                   placeholder="https://...">
+          </div>
+
+          <div>
+            <label for="mapUrl">رابط Google Maps</label>
+            <input id="mapUrl" type="url"
+                   placeholder="https://...">
+          </div>
+
+          <div style="grid-column:1/-1">
+            <label for="socialUrl">رابط حساب المحل</label>
+            <input id="socialUrl" type="url"
+                   placeholder="https://instagram.com/...">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="saveBtn" type="submit">حفظ المحل</button>
+          <button id="resetBtn" class="secondary" type="button">
+            محل جديد
+          </button>
+        </div>
+      </form>
+
+      <div id="formStatus" class="status hidden"></div>
+    </section>
+
+    <!-- قائمة المحلات -->
+    <section class="card">
+      <h2>المحلات المسجلة</h2>
+
+      <p class="muted">
+        من هنا تقدر تعرض بيانات كل محل وتعدّلها أو تحذفها.
+      </p>
+
+      <div class="actions">
+        <button id="refreshBtn" class="secondary" type="button">
+          تحديث القائمة
+        </button>
+      </div>
+
+      <div id="listStatus" class="status hidden"></div>
+      <div id="shopsList"></div>
+    </section>
+
+  </main>
+</div>
+
 <script>
-// إعدادات مشروع Supabase الخاص بك
-const SUPABASE_URL = 'https://mwpeycqflokjlwwhtlte.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_CRRpmEutt5d86meO07bMPw_N4WE6GVr';
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+/* ==========================================
+   إعدادات Supabase
+   استخدم Project URL والمفتاح العام Publishable
+   لا تستخدم Service Role Key هنا.
+========================================== */
+
+const SUPABASE_URL =
+  'https://mwpeycqflokjlwwhtlte.supabase.co/rest/v1/';
+
+const SUPABASE_KEY =
+  'sb_publishable_CRRpmEutt5d86meO07bMPw_N4WE6GVr';
+
+/* ==========================================
+   لا تحتاج إلى تعديل ما تحت هذا السطر
+========================================== */
+
 const $ = id => document.getElementById(id);
-function message(id, text, error=false){const el=$(id);el.textContent=text;el.classList.remove('hidden','error');if(error)el.classList.add('error');}
-function hideMessage(id){$(id).classList.add('hidden');}
-function showApp(session){$('login-card').classList.toggle('hidden',!!session);$('app').classList.toggle('hidden',!session);$('logout').classList.toggle('hidden',!session);if(session)loadShops();}
-async function loadShops(){
- $('shops-list').innerHTML='';message('list-msg','جاري تحميل المحلات...');
- const {data,error}=await db.from('shops').select('id,name,slug,description,emoji,catagory,contact_name,notes,brand_color,is_active,created_at,updated_at').order('created_at',{ascending:false});
- if(error){message('list-msg','تعذّر تحميل المحلات: '+error.message+'\nتأكد من تنفيذ سياسات RLS في الخطوة التالية.',true);return;}
- hideMessage('list-msg');if(!data.length){$('shops-list').innerHTML='<p class="muted">ما فيه محلات مسجلة حتى الآن. أضف أول محل من النموذج فوق.</p>';return;}
- for(const s of data){const row=document.createElement('div');row.className='shop';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=(s.emoji?s.emoji+' ':'')+s.name;const small=document.createElement('small');small.textContent='الرابط المختصر: '+(s.slug||'—');const pill=document.createElement('span');pill.className='pill'+(s.is_active===false?' off':'');pill.textContent=s.is_active===false?'غير مفعّل':'مفعّل';info.append(title,small,pill);const actions=document.createElement('div');actions.className='shop-actions';const edit=document.createElement('button');edit.className='secondary';edit.textContent='تعديل';edit.onclick=()=>editShop(s);const del=document.createElement('button');del.className='danger';del.textContent='حذف';del.onclick=()=>deleteShop(s);actions.append(edit,del);row.append(info,actions);$('shops-list').append(row);}
+
+let db = null;
+
+function showStatus(id, text, error = false) {
+  const el = $(id);
+
+  el.textContent = text;
+  el.classList.remove('hidden', 'error');
+
+  if (error) {
+    el.classList.add('error');
+  }
 }
-function resetForm(){ $('shop-form').reset();$('shop-id').value='';$('brand_color').value='#243b53';$('is_active').value='true';$('form-title').textContent='إضافة محل جديد';$('save-btn').textContent='حفظ المحل';hideMessage('form-msg');}
-function editShop(s){$('shop-id').value=s.id;$('name').value=s.name||'';$('slug').value=s.slug||'';$('emoji').value=s.emoji||'';$('catagory').value=s.catagory||'';$('contact_name').value=s.contact_name||'';$('brand_color').value=s.brand_color||'#243b53';$('description').value=s.description||'';$('notes').value=s.notes||'';$('is_active').value=String(s.is_active!==false);$('form-title').textContent='تعديل: '+s.name;$('save-btn').textContent='حفظ التعديلات';hideMessage('form-msg');window.scrollTo({top:0,behavior:'smooth'});}
-$('shop-form').addEventListener('submit',async e=>{e.preventDefault();const id=$('shop-id').value;const slug=$('slug').value.trim().toLowerCase().replace(/\s+/g,'-');const payload={name:$('name').value.trim(),slug,emoji:$('emoji').value.trim()||null,catagory:$('catagory').value.trim()||null,contact_name:$('contact_name').value.trim()||null,brand_color:$('brand_color').value,description:$('description').value.trim()||null,notes:$('notes').value.trim()||null,is_active:$('is_active').value==='true',updated_at:new Date().toISOString()};if(!payload.name||!payload.slug){message('form-msg','اكتب اسم المحل والرابط المختصر.',true);return;}$('save-btn').disabled=true;try{let result;if(id)result=await db.from('shops').update(payload).eq('id',id);else result=await db.from('shops').insert(payload);if(result.error)throw result.error;message('form-msg',id?'تم حفظ التعديلات بنجاح.':'تمت إضافة المحل بنجاح.');resetForm();await loadShops();message('form-msg',id?'تم حفظ التعديلات بنجاح.':'تمت إضافة المحل بنجاح.');}catch(err){message('form-msg','ما تم الحفظ: '+err.message,true);}finally{$('save-btn').disabled=false;}});
-async function deleteShop(s){if(!confirm('متأكد تبي تحذف محل «'+s.name+'» نهائيًا؟'))return;const {error}=await db.from('shops').delete().eq('id',s.id);if(error){message('list-msg','تعذّر الحذف: '+error.message,true);return;}message('list-msg','تم حذف المحل.');await loadShops();}
-$('login-form').addEventListener('submit',async e=>{e.preventDefault();message('login-msg','جاري تسجيل الدخول...');const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){message('login-msg','تعذّر الدخول: '+error.message,true);return;}hideMessage('login-msg');showApp(data.session);});
-$('logout').onclick=async()=>{await db.auth.signOut();showApp(null);};$('new-btn').onclick=resetForm;$('cancel-btn').onclick=resetForm;$('refresh-btn').onclick=loadShops;
-db.auth.getSession().then(({data})=>showApp(data.session));db.auth.onAuthStateChange((_event,session)=>{if(!session)showApp(null);});
-</script></body></html>
+
+function hideStatus(id) {
+  $(id).classList.add('hidden');
+}
+
+function initializeSupabase() {
+  if (!window.supabase) {
+    showStatus(
+      'loginStatus',
+      'تعذّر تحميل Supabase. تأكد من اتصال الإنترنت.',
+      true
+    );
+    return false;
+  }
+
+  if (
+    SUPABASE_URL.includes('PUT_YOUR') ||
+    SUPABASE_KEY.includes('PUT_YOUR')
+  ) {
+    showStatus(
+      'loginStatus',
+      'أدخل رابط مشروع Supabase والمفتاح العام في أعلى الكود.',
+      true
+    );
+    return false;
+  }
+
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  return true;
+}
+
+function showDashboard(isLoggedIn) {
+  $('loginCard').classList.toggle(
+    'hidden',
+    isLoggedIn
+  );
+
+  $('dashboard').classList.toggle(
+    'hidden',
+    !isLoggedIn
+  );
+
+  if (isLoggedIn) {
+    loadShops();
+  }
+}
+
+function safeUrl(value) {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+
+    if (
+      url.protocol !== 'https:' &&
+      url.protocol !== 'http:'
+    ) {
+      return null;
+    }
+
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function resetForm() {
+  $('shopForm').reset();
+  $('shopId').value = '';
+
+  $('formTitle').textContent = 'إضافة محل جديد';
+  $('saveBtn').textContent = 'حفظ المحل';
+
+  hideStatus('formStatus');
+}
+
+function editShop(shop) {
+  $('shopId').value = shop.id;
+  $('storeName').value = shop.store_name || '';
+  $('phone').value = shop.phone || '';
+  $('menuUrl').value = shop.menu_url || '';
+  $('mapUrl').value = shop.map_url || '';
+  $('socialUrl').value = shop.instagram_url || '';
+
+  $('formTitle').textContent =
+    'تعديل: ' + shop.store_name;
+
+  $('saveBtn').textContent = 'حفظ التعديلات';
+
+  hideStatus('formStatus');
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+
+async function loadShops() {
+  if (!db) return;
+
+  $('shopsList').replaceChildren();
+
+  showStatus(
+    'listStatus',
+    'جاري تحميل المحلات...'
+  );
+
+  const { data, error } = await db
+    .from('clients')
+    .select(
+      'id,store_name,phone,menu_url,map_url,instagram_url'
+    )
+    .order('store_name', { ascending: true });
+
+  if (error) {
+    showStatus(
+      'listStatus',
+      'تعذّر تحميل المحلات:\n' +
+      error.message +
+      '\nتأكد من اسم الجدول والأعمدة وصلاحيات RLS.',
+      true
+    );
+    return;
+  }
+
+  hideStatus('listStatus');
+
+  $('totalCount').textContent = data.length;
+
+  $('phoneCount').textContent =
+    data.filter(shop => shop.phone).length;
+
+  $('linksCount').textContent =
+    data.filter(shop =>
+      shop.menu_url ||
+      shop.map_url ||
+      shop.instagram_url
+    ).length;
+
+  if (data.length === 0) {
+    const empty = document.createElement('div');
+
+    empty.className = 'empty';
+    empty.textContent =
+      'ما فيه محلات مسجلة. أضف أول محل من النموذج.';
+
+    $('shopsList').appendChild(empty);
+    return;
+  }
+
+  data.forEach(shop => {
+    const row = document.createElement('div');
+    row.className = 'shop';
+
+    const info = document.createElement('div');
+    info.className = 'shop-info';
+
+    const name = document.createElement('div');
+    name.className = 'shop-name';
+    name.textContent = shop.store_name || 'محل بدون اسم';
+
+    const phone = document.createElement('small');
+    phone.textContent =
+      'رقم التواصل: ' + (shop.phone || 'غير مضاف');
+
+    info.append(name, phone);
+
+    const links = document.createElement('div');
+    links.className = 'shop-info';
+
+    addLink(links, 'المنيو', shop.menu_url);
+    addLink(links, 'الموقع', shop.map_url);
+    addLink(links, 'الحساب', shop.instagram_url);
+
+    const actions = document.createElement('div');
+    actions.className = 'shop-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'secondary';
+    editBtn.textContent = 'تعديل';
+    editBtn.type = 'button';
+    editBtn.onclick = () => editShop(shop);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'danger';
+    deleteBtn.textContent = 'حذف';
+    deleteBtn.type = 'button';
+    deleteBtn.onclick = () => deleteShop(shop);
+
+    actions.append(editBtn, deleteBtn);
+    row.append(info, links, actions);
+
+    $('shopsList').appendChild(row);
+  });
+}
+
+function addLink(container, label, value) {
+  if (!value) return;
+
+  const url = safeUrl(value);
+  if (!url) return;
+
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = label;
+
+  link.style.marginLeft = '10px';
+
+  container.appendChild(link);
+}
+
+$('loginForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  if (!db && !initializeSupabase()) return;
+
+  $('loginBtn').disabled = true;
+
+  showStatus(
+    'loginStatus',
+    'جاري تسجيل الدخول...'
+  );
+
+  const { error } = await db.auth.signInWithPassword({
+    email: $('email').value.trim(),
+    password: $('password').value
+  });
+
+  $('loginBtn').disabled = false;
+
+  if (error) {
+    showStatus(
+      'loginStatus',
+      'تعذّر تسجيل الدخول: ' + error.message,
+      true
+    );
+    return;
+  }
+
+  hideStatus('loginStatus');
+  showDashboard(true);
+});
+
+$('shopForm').addEventListener('submit', async event => {
+  event.preventDefault();
+
+  if (!db) return;
+
+  const id = $('shopId').value;
+
+  const payload = {
+    store_name: $('storeName').value.trim(),
+    phone: $('phone').value.trim() || null,
+    menu_url: safeUrl($('menuUrl').value.trim()),
+    map_url: safeUrl($('mapUrl').value.trim()),
+    instagram_url: safeUrl($('socialUrl').value.trim())
+  };
+
+  if (!payload.store_name) {
+    showStatus(
+      'formStatus',
+      'اكتب اسم المحل أولًا.',
+      true
+    );
+    return;
+  }
+
+  $('saveBtn').disabled = true;
+
+  let result;
+
+  if (id) {
+    result = await db
+      .from('clients')
+      .update(payload)
+      .eq('id', id);
+  } else {
+    result = await db
+      .from('clients')
+      .insert(payload);
+  }
+
+  $('saveBtn').disabled = false;
+
+  if (result.error) {
+    showStatus(
+      'formStatus',
+      'لم يتم الحفظ:\n' + result.error.message,
+      true
+    );
+    return;
+  }
+
+  showStatus(
+    'formStatus',
+    id
+      ? 'تم تحديث بيانات المحل بنجاح.'
+      : 'تمت إضافة المحل بنجاح.'
+  );
+
+  resetForm();
+  await loadShops();
+});
+
+async function deleteShop(shop) {
+  const confirmed = confirm(
+    'هل أنت متأكد أنك تريد حذف محل ' +
+    shop.store_name +
+    '؟'
+  );
+
+  if (!confirmed) return;
+
+  const { error } = await db
+    .from('clients')
+    .delete()
+    .eq('id', shop.id);
+
+  if (error) {
+    showStatus(
+      'listStatus',
+      'تعذّر الحذف: ' + error.message,
+      true
+    );
+    return;
+  }
+
+  await loadShops();
+
+  showStatus(
+    'listStatus',
+    'تم حذف المحل بنجاح.'
+  );
+}
+
+$('logoutBtn').addEventListener('click', async () => {
+  if (db) {
+    await db.auth.signOut();
+  }
+
+  showDashboard(false);
+  resetForm();
+});
+
+$('resetBtn').addEventListener('click', resetForm);
+$('refreshBtn').addEventListener('click', loadShops);
+
+if (initializeSupabase()) {
+  db.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      showStatus('loginStatus', error.message, true);
+      return;
+    }
+
+    if (data.session) {
+      showDashboard(true);
+    }
+  });
+
+  db.auth.onAuthStateChange((_event, session) => {
+    if (!session) {
+      showDashboard(false);
+    }
+  });
+}
+</script>
+</body>
+</html>
