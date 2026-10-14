@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة تحكم NFC</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;color:#18212f;background:#f4f6fa}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1050px;margin:30px auto;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}.card{background:#fff;border:1px solid #e5e9f0;border-radius:16px;padding:20px;box-shadow:0 6px 24px #14213d0b;margin-bottom:16px}h1{font-size:25px;margin:0}h2{font-size:19px;margin:0 0 14px}.muted{color:#687386;font-size:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{display:block;font-size:14px;font-weight:650;margin-bottom:5px}input,textarea,select{width:100%;padding:11px;border:1px solid #ccd4df;border-radius:10px;font:inherit;background:#fff}textarea{min-height:76px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:700;cursor:pointer;background:#18212f;color:#fff}button.secondary{background:#e9edf3;color:#18212f}button.danger{background:#b42318}button:disabled{opacity:.5;cursor:wait}.hidden{display:none!important}.msg{padding:10px 12px;border-radius:10px;margin:12px 0;background:#eef4ff;color:#214d91;white-space:pre-wrap}.msg.error{background:#fff0ef;color:#a12820}.list{display:grid;gap:10px}.shop{border:1px solid #e2e7ef;border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.shop strong{font-size:16px}.shop small{display:block;color:#687386;margin-top:4px}.shop-actions{display:flex;gap:7px}.pill{display:inline-block;font-size:12px;border-radius:30px;padding:4px 8px;background:#e9f7ef;color:#17663a}.pill.off{background:#f2f3f5;color:#5b6472}@media(max-width:650px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.wrap{margin:12px auto}.card{padding:15px}}
+</style></head><body><main class="wrap">
+<header class="top"><div><h1>لوحة تحكم NFC</h1><div class="muted">لوحة خاصة لإدارة المحلات — منفصلة عن صفحة الزبائن</div></div><button id="logout" class="secondary hidden">تسجيل خروج</button></header>
+<section id="login-card" class="card"><h2>دخول المدير</h2><p class="muted">سجّل الدخول بحساب المدير الذي تنشئه في Supabase.</p><form id="login-form"><div class="grid"><div><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required></div><div><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required></div></div><div class="actions"><button type="submit">دخول</button></div></form><div id="login-msg" class="msg hidden"></div></section>
+<section id="app" class="hidden">
+<div class="card"><div class="top"><h2 id="form-title">إضافة محل جديد</h2><button id="new-btn" class="secondary" type="button">+ محل جديد</button></div>
+<form id="shop-form"><input id="shop-id" type="hidden"><div class="grid">
+<div><label for="name">اسم المحل *</label><input id="name" required maxlength="120" placeholder="مثال: ديوانية مخمل"></div>
+<div><label for="slug">الرابط المختصر (Slug) *</label><input id="slug" required maxlength="120" placeholder="diwaniya-makhmal"></div>
+<div><label for="emoji">رمز / إيموجي</label><input id="emoji" maxlength="20" placeholder="☕"></div>
+<div><label for="catagory">التصنيف</label><input id="catagory" maxlength="80" placeholder="كافيه / مطعم"></div>
+<div><label for="contact_name">اسم جهة التواصل</label><input id="contact_name" maxlength="120"></div>
+<div><label for="brand_color">لون الهوية</label><input id="brand_color" type="color" value="#243b53"></div>
+<div class="full"><label for="description">وصف المحل</label><textarea id="description" maxlength="1000"></textarea></div>
+<div class="full"><label for="notes">ملاحظات داخلية</label><textarea id="notes" maxlength="2000"></textarea></div>
+<div><label for="is_active">حالة المحل</label><select id="is_active"><option value="true">مفعّل</option><option value="false">غير مفعّل</option></select></div>
+</div><div class="actions"><button id="save-btn" type="submit">حفظ المحل</button><button id="cancel-btn" class="secondary" type="button">إلغاء</button></div><div id="form-msg" class="msg hidden"></div></form></div>
+<div class="card"><div class="top"><h2>المحلات المسجلة</h2><button id="refresh-btn" class="secondary" type="button">تحديث القائمة</button></div><div id="list-msg" class="msg hidden"></div><div id="shops-list" class="list"></div></div>
+</section></main>
+<script>
+// إعدادات مشروع Supabase الخاص بك
+const SUPABASE_URL = 'https://mwpeycqflokjlwwhtlte.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_CRRpmEutt5d86meO07bMPw_N4WE6GVr';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const $ = id => document.getElementById(id);
+function message(id, text, error=false){const el=$(id);el.textContent=text;el.classList.remove('hidden','error');if(error)el.classList.add('error');}
+function hideMessage(id){$(id).classList.add('hidden');}
+function showApp(session){$('login-card').classList.toggle('hidden',!!session);$('app').classList.toggle('hidden',!session);$('logout').classList.toggle('hidden',!session);if(session)loadShops();}
+async function loadShops(){
+ $('shops-list').innerHTML='';message('list-msg','جاري تحميل المحلات...');
+ const {data,error}=await db.from('shops').select('id,name,slug,description,emoji,catagory,contact_name,notes,brand_color,is_active,created_at,updated_at').order('created_at',{ascending:false});
+ if(error){message('list-msg','تعذّر تحميل المحلات: '+error.message+'\nتأكد من تنفيذ سياسات RLS في الخطوة التالية.',true);return;}
+ hideMessage('list-msg');if(!data.length){$('shops-list').innerHTML='<p class="muted">ما فيه محلات مسجلة حتى الآن. أضف أول محل من النموذج فوق.</p>';return;}
+ for(const s of data){const row=document.createElement('div');row.className='shop';const info=document.createElement('div');const title=document.createElement('strong');title.textContent=(s.emoji?s.emoji+' ':'')+s.name;const small=document.createElement('small');small.textContent='الرابط المختصر: '+(s.slug||'—');const pill=document.createElement('span');pill.className='pill'+(s.is_active===false?' off':'');pill.textContent=s.is_active===false?'غير مفعّل':'مفعّل';info.append(title,small,pill);const actions=document.createElement('div');actions.className='shop-actions';const edit=document.createElement('button');edit.className='secondary';edit.textContent='تعديل';edit.onclick=()=>editShop(s);const del=document.createElement('button');del.className='danger';del.textContent='حذف';del.onclick=()=>deleteShop(s);actions.append(edit,del);row.append(info,actions);$('shops-list').append(row);}
+}
+function resetForm(){ $('shop-form').reset();$('shop-id').value='';$('brand_color').value='#243b53';$('is_active').value='true';$('form-title').textContent='إضافة محل جديد';$('save-btn').textContent='حفظ المحل';hideMessage('form-msg');}
+function editShop(s){$('shop-id').value=s.id;$('name').value=s.name||'';$('slug').value=s.slug||'';$('emoji').value=s.emoji||'';$('catagory').value=s.catagory||'';$('contact_name').value=s.contact_name||'';$('brand_color').value=s.brand_color||'#243b53';$('description').value=s.description||'';$('notes').value=s.notes||'';$('is_active').value=String(s.is_active!==false);$('form-title').textContent='تعديل: '+s.name;$('save-btn').textContent='حفظ التعديلات';hideMessage('form-msg');window.scrollTo({top:0,behavior:'smooth'});}
+$('shop-form').addEventListener('submit',async e=>{e.preventDefault();const id=$('shop-id').value;const slug=$('slug').value.trim().toLowerCase().replace(/\s+/g,'-');const payload={name:$('name').value.trim(),slug,emoji:$('emoji').value.trim()||null,catagory:$('catagory').value.trim()||null,contact_name:$('contact_name').value.trim()||null,brand_color:$('brand_color').value,description:$('description').value.trim()||null,notes:$('notes').value.trim()||null,is_active:$('is_active').value==='true',updated_at:new Date().toISOString()};if(!payload.name||!payload.slug){message('form-msg','اكتب اسم المحل والرابط المختصر.',true);return;}$('save-btn').disabled=true;try{let result;if(id)result=await db.from('shops').update(payload).eq('id',id);else result=await db.from('shops').insert(payload);if(result.error)throw result.error;message('form-msg',id?'تم حفظ التعديلات بنجاح.':'تمت إضافة المحل بنجاح.');resetForm();await loadShops();message('form-msg',id?'تم حفظ التعديلات بنجاح.':'تمت إضافة المحل بنجاح.');}catch(err){message('form-msg','ما تم الحفظ: '+err.message,true);}finally{$('save-btn').disabled=false;}});
+async function deleteShop(s){if(!confirm('متأكد تبي تحذف محل «'+s.name+'» نهائيًا؟'))return;const {error}=await db.from('shops').delete().eq('id',s.id);if(error){message('list-msg','تعذّر الحذف: '+error.message,true);return;}message('list-msg','تم حذف المحل.');await loadShops();}
+$('login-form').addEventListener('submit',async e=>{e.preventDefault();message('login-msg','جاري تسجيل الدخول...');const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){message('login-msg','تعذّر الدخول: '+error.message,true);return;}hideMessage('login-msg');showApp(data.session);});
+$('logout').onclick=async()=>{await db.auth.signOut();showApp(null);};$('new-btn').onclick=resetForm;$('cancel-btn').onclick=resetForm;$('refresh-btn').onclick=loadShops;
+db.auth.getSession().then(({data})=>showApp(data.session));db.auth.onAuthStateChange((_event,session)=>{if(!session)showApp(null);});
+</script></body></html>
